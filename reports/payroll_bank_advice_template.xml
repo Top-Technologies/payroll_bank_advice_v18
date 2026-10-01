@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- =====================================================================
+         TEMPLATE 1: Bank Advice Letter (Portrait, A4)
+         Called by action_report_payroll_bank_advice
+    ===================================================================== -->
+    <template id="payroll_bank_advice_report">
+        <t t-call="web.html_container">
+            <t t-set="company" t-value="docs[0].company_id if docs else env.company"/>
+            <t t-set="report_data" t-value="docs._prepare_bank_advice_report_data()"/>
+            <t t-set="settings" t-value="report_data['settings']"/>
+            <t t-set="company_info" t-value="report_data['company']"/>
+
+            <t t-call="web.basic_layout">
+                <!-- 1. LOCKED PAGE HEADER (Logo | Company Name and Address | Date and Ref No) -->
+                <div class="header" style="border:none !important;">
+                    <table border="0" cellspacing="0" cellpadding="0" style="width:100%; border:0; border-collapse:collapse; margin-bottom:15px;">
+                        <tr>
+                            <td style="vertical-align:top; padding:0; width:100px; border:0;">
+                                <t t-if="company_info.get('logo_src')">
+                                    <img t-att-src="company_info['logo_src']" style="max-height:85px; max-width:95px; display:block;"/>
+                                </t>
+                                <t t-elif="company.logo">
+                                    <img t-att-src="image_data_uri(company.logo)" style="max-height:85px; max-width:95px; display:block;"/>
+                                </t>
+                            </td>
+                            <td style="vertical-align:top; padding:0 14px; border:0;">
+                                <div style="font-size:11.5pt; font-weight:bold; margin-bottom:3px; color:#000;">
+                                    <span t-out="company_info.get('company_name') or company.name"/>
+                                </div>
+                                <div style="font-size:9.5pt; line-height:1.4; color:#000;">
+                                    <t t-if="company_info.get('company_address')">
+                                        <span t-out="company_info['company_address']"/>
+                                    </t>
+                                    <t t-elif="company.partner_id and company.partner_id.contact_address">
+                                        <span t-out="company.partner_id.contact_address.replace('\n', ', ')"/>
+                                    </t>
+                                    <t t-if="company_info.get('company_vat') or company.vat">
+                                        <br/>TIN/VAT: <span t-out="company_info.get('company_vat') or company.vat"/>
+                                    </t>
+                                </div>
+                            </td>
+                            <td style="vertical-align:top; text-align:right; padding:0; white-space:nowrap; width:240px; border:0;">
+                                <div style="font-size:11pt; margin-bottom:6px;">
+                                    <strong>Date: </strong>
+                                    <span t-out="report_data.get('report_date_formatted', '')"/>
+                                </div>
+                                <div style="font-size:11pt;">
+                                    <strong>Ref No: </strong><span t-out="report_data.get('reference_number', '')"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 2. LOCKED PAGE FOOTER (Tel | Email | Web | Page Counter) -->
+                <div class="footer o_company_layout">
+                    <div style="border-top:1px solid #333; padding-top:6px; font-size:9pt; color:#333;" class="row">
+                        <div class="col-8 text-start">
+                            <t t-if="company_info.get('company_phone') or company.phone">
+                                <strong>Tel: </strong><span t-out="company_info.get('company_phone') or company.phone"/>
+                            </t>
+                            <t t-if="company_info.get('company_email') or company.email">
+                                &#160;&#160;<strong>Email: </strong><span t-out="company_info.get('company_email') or company.email"/>
+                            </t>
+                            <t t-if="company_info.get('company_website') or company.website">
+                                &#160;&#160;<strong>Web: </strong><span t-out="company_info.get('company_website') or company.website"/>
+                            </t>
+                        </div>
+                        <div class="col-4 text-end text-muted">
+                            Page <span class="page"/> / <span class="topage"/>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    .page {
+                        font-family: Arial, Helvetica, sans-serif !important;
+                        font-size: 11pt !important;
+                        color: #000000 !important;
+                    }
+                    table.bank-advice-table {
+                        width: 100%;
+                        border-collapse: collapse !important;
+                        margin-bottom: 20px;
+                        font-size: 10pt;
+                        page-break-inside: auto;
+                    }
+                    table.bank-advice-table thead {
+                        display: table-header-group;
+                    }
+                    table.bank-advice-table tr {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                    }
+                    table.bank-advice-table th {
+                        background-color: #118B46 !important;
+                        color: #000000 !important;
+                        font-weight: bold;
+                        border: 1px solid #000000 !important;
+                        padding: 6px 8px !important;
+                        vertical-align: middle;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    table.bank-advice-table td {
+                        border: 1px solid #000000 !important;
+                        padding: 6px 8px !important;
+                        vertical-align: middle;
+                    }
+                    .last-page-guard {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        margin-top: 15px;
+                    }
+                </style>
+
+                <!-- 3. MAIN DOCUMENT BODY -->
+                <div class="page">
+                    <!-- RECIPIENT BANK DETAILS -->
+                    <div style="margin-bottom:16px; line-height:1.6; font-size:11pt;">
+                        <div><strong>To: </strong><span t-out="settings.get('default_bank_name') or 'Commercial Bank of Ethiopia(CBE)'"/></div>
+                        <t t-if="settings.get('branch')">
+                            <div><span t-out="settings.get('branch')"/></div>
+                        </t>
+                        <div>
+                            <span t-out="settings.get('bank_city') or 'Addis Ababa'"/>
+                            <t t-if="settings.get('bank_country')">
+                                (ET), <span t-out="settings.get('bank_country')"/>
+                            </t>
+                            <t t-else="">
+                                (ET), Ethiopia
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- SUBJECT -->
+                    <div style="margin-bottom:14px; font-weight:bold; text-align:center; font-size:11.5pt; text-decoration:underline;">
+                        Subject: Employee Salary payment For the month of <span t-out="report_data.get('pay_period', '')"/>
+                    </div>
+
+                    <!-- SALUTATION -->
+                    <div style="margin-bottom:8px; font-size:11pt; text-decoration:underline;">Dear Sir.</div>
+
+                    <!-- BODY PARAGRAPH -->
+                    <div style="margin-bottom:20px; text-align:justify; line-height:1.6; font-size:11pt;">
+                        We here by authorize the bank to debit total Amount Birr
+                        <u><strong><span t-out="'{:,.2f}'.format(report_data.get('total_amount', 0.0))"/> (<span t-out="report_data.get('amount_in_words', '')"/>)</strong></u>
+                        From <u><strong><span t-out="settings.get('company_account_name') or company_info.get('company_name') or company.name"/> account (<span t-out="settings.get('company_account_number', '')"/>)</strong></u>
+                        maintained with you and credit the following list of employees with corresponding amount.
+                    </div>
+
+                    <!-- EMPLOYEE TABLE -->
+                    <table class="bank-advice-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center; width:5%;">S.N</th>
+                                <th style="text-align:center; width:13%;">Ref.</th>
+                                <th style="text-align:left;   width:40%;">Employee</th>
+                                <th style="text-align:center; width:24%;">Bank Account</th>
+                                <th style="text-align:right;  width:18%;">Net Wage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="report_data['payslips']" t-as="line">
+                                <tr>
+                                    <td style="text-align:center;"><span t-out="line_index + 1"/></td>
+                                    <td style="text-align:center;"><span t-out="line['payslip_number']"/></td>
+                                    <td style="text-align:left;"><span t-out="line['employee_name']"/></td>
+                                    <td style="text-align:center;"><span t-out="line['bank_account_number']"/></td>
+                                    <td style="text-align:right;"><span t-out="'{:,.2f}'.format(line['net_salary'])"/> Br</td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <!-- LAST PAGE GUARDED BLOCK: Totals and Closing -->
+                    <div class="last-page-guard">
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10pt;">
+                            <tr style="font-weight:bold;">
+                                <td colspan="4" style="border:1px solid #000 !important; padding:6px 8px !important; text-align:left; width:82%;">Total:</td>
+                                <td style="border:1px solid #000 !important; padding:6px 8px !important; text-align:right; width:18%;">
+                                    <span t-out="'{:,.2f}'.format(report_data.get('total_amount', 0.0))"/> ETB
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="margin-bottom:6px; font-size:11pt;">Thank you in advance on this regards.</div>
+                        <div style="margin-bottom:20px; font-size:11pt;">Best Regards,</div>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- =====================================================================
+         TEMPLATE 2: Salary Rule Summary (Landscape A4)
+         Called by action_report_salary_rule_summary (separate landscape action).
+         This template is rendered as a standalone PDF then merged by Python.
+    ===================================================================== -->
+    <template id="payroll_bank_advice_salary_summary_report">
+        <t t-call="web.html_container">
+            <t t-set="company" t-value="docs[0].company_id if docs else env.company"/>
+            <t t-set="report_data" t-value="docs._prepare_bank_advice_report_data()"/>
+            <t t-set="company_info" t-value="report_data['company']"/>
+            <t t-set="summary" t-value="report_data.get('salary_rule_summary', {})"/>
+
+            <t t-call="web.basic_layout">
+                <style>
+                    body, .page {
+                        font-family: Arial, Helvetica, sans-serif !important;
+                        font-size: 9pt !important;
+                        color: #000 !important;
+                    }
+                    table.summary-table {
+                        width: 100%;
+                        border-collapse: collapse !important;
+                        font-size: 8.5pt;
+                        margin-top: 12px;
+                    }
+                    table.summary-table thead {
+                        display: table-header-group;
+                    }
+                    table.summary-table th {
+                        background-color: #1a5276 !important;
+                        color: #ffffff !important;
+                        font-weight: bold;
+                        border: 1px solid #333 !important;
+                        padding: 5px 6px !important;
+                        text-align: center;
+                        vertical-align: middle;
+                        white-space: nowrap;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    table.summary-table td {
+                        border: 1px solid #aaa !important;
+                        padding: 4px 6px !important;
+                        vertical-align: middle;
+                        white-space: nowrap;
+                    }
+                    table.summary-table tr:nth-child(even) td {
+                        background-color: #f0f4f8 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    table.summary-table tr.total-row td {
+                        background-color: #d5e8d4 !important;
+                        font-weight: bold !important;
+                        border-top: 2px solid #333 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .summary-title {
+                        font-size: 12pt;
+                        font-weight: bold;
+                        text-align: center;
+                        text-decoration: underline;
+                        margin-bottom: 6px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                    .summary-subtitle {
+                        font-size: 8.5pt;
+                        text-align: center;
+                        margin-bottom: 10px;
+                        color: #444;
+                    }
+                    .footer-note {
+                        margin-top: 10px;
+                        font-size: 7.5pt;
+                        color: #666;
+                        text-align: right;
+                    }
+                </style>
+
+                <div class="page" data-report-landscape="True">
+                    <!-- Title -->
+                    <div class="summary-title">
+                        Salary Summary &#8212; <span t-out="report_data.get('pay_period', '')"/>
+                    </div>
+                    <div class="summary-subtitle">
+                        Company: <strong><span t-out="company_info.get('company_name') or company.name"/></strong>
+                        &#160;&#160;|&#160;&#160;
+                        Printed: <span t-out="report_data.get('print_date', '')"/>
+                        &#160;&#160;|&#160;&#160;
+                        Total Employees: <span t-out="len(summary.get('rows', []))"/>
+                    </div>
+
+                    <!-- Dynamic Salary Rule Table -->
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center; width:25px;">#</th>
+                                <th style="text-align:left;">Employee Name</th>
+                                <th style="text-align:center;">Payslip Ref</th>
+                                <th style="text-align:center;">Period</th>
+                                <!-- Dynamic salary rule columns (one per unique rule code found) -->
+                                <t t-foreach="summary.get('rule_columns', [])" t-as="col">
+                                    <th style="text-align:right;">
+                                        <span t-out="col['name']"/>
+                                    </th>
+                                </t>
+                                <th style="text-align:right; background-color:#0d3e5c !important;">Net Salary</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- One row per payslip/employee -->
+                            <t t-foreach="summary.get('rows', [])" t-as="row">
+                                <tr>
+                                    <td style="text-align:center;"><span t-out="row_index + 1"/></td>
+                                    <td style="text-align:left;"><span t-out="row['employee_name']"/></td>
+                                    <td style="text-align:center;"><span t-out="row['payslip_number']"/></td>
+                                    <td style="text-align:center;"><span t-out="row['period']"/></td>
+                                    <!-- Amount for each rule column; 0.00 if rule missing for this employee -->
+                                    <t t-foreach="summary.get('rule_columns', [])" t-as="col">
+                                        <td style="text-align:right;">
+                                            <span t-out="'{:,.2f}'.format(row['amounts'].get(col['code'], 0.0))"/>
+                                        </td>
+                                    </t>
+                                    <td style="text-align:right; font-weight:bold;">
+                                        <span t-out="'{:,.2f}'.format(row['net_salary'])"/>
+                                    </td>
+                                </tr>
+                            </t>
+
+                            <!-- TOTAL row -->
+                            <tr class="total-row">
+                                <td colspan="4" style="text-align:left; padding-left:8px;">TOTAL</td>
+                                <t t-foreach="summary.get('rule_columns', [])" t-as="col">
+                                    <td style="text-align:right;">
+                                        <span t-out="'{:,.2f}'.format(summary.get('totals', {}).get(col['code'], 0.0))"/>
+                                    </td>
+                                </t>
+                                <td style="text-align:right;">
+                                    <span t-out="'{:,.2f}'.format(summary.get('totals', {}).get('net_salary', 0.0))"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="footer-note">
+                        All amounts in <span t-out="company.currency_id.name or 'ETB'"/>.
+                        &#160; Generated from <span t-out="len(summary.get('rows', []))"/> payslip(s).
+                        &#160; Page <span class="page"/> / <span class="topage"/>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
