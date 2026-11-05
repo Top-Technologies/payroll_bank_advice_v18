@@ -12,64 +12,69 @@ class HrPayslip(models.Model):
     # -------------------------------------------------------------------------
 
     def _get_employee_bank_info(self, employee):
-
         bank_account_number = ''
         bank_name = ''
 
-        
-        if hasattr(employee, 'bank_account_ids') and employee.bank_account_ids:
-            if hasattr(employee, 'primary_bank_account_id') and employee.primary_bank_account_id:
-                bank_account = employee.primary_bank_account_id
-            else:
-                
-                bank_account = employee.bank_account_ids[0]
-            bank_account_number = bank_account.acc_number or ''
+        if not employee:
+            return {'bank_name': '', 'bank_account_number': ''}
+
+        # 1. Check employee.bank_account_id (standard Odoo hr.employee field)
+        bank_account = getattr(employee, 'bank_account_id', False)
+        if bank_account:
+            bank_account_number = getattr(bank_account, 'acc_number', '') or ''
+            bank_id = getattr(bank_account, 'bank_id', False)
             bank_name = (
-                bank_account.bank_id.name
-                or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
+                getattr(bank_id, 'name', '')
+                or getattr(bank_account, 'bank_name', '')
                 or ''
             )
 
-        
-        if not bank_account_number and hasattr(employee, 'bank_account_id') and employee.bank_account_id:
-            bank_account = employee.bank_account_id
-            bank_account_number = bank_account.acc_number or ''
-            bank_name = (
-                bank_account.bank_id.name
-                or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
-                or ''
-            )
-
-        #
-        if not bank_account_number and hasattr(employee, 'address_home_id') and employee.address_home_id:
-            partner = employee.address_home_id
-            if partner.bank_ids:
-                bank = partner.bank_ids[0]
-                bank_account_number = bank.acc_number or ''
+        # 2. Check employee.bank_account_ids (if multi-bank module installed)
+        if not bank_account_number:
+            bank_accounts = getattr(employee, 'bank_account_ids', False)
+            if bank_accounts:
+                primary = getattr(employee, 'primary_bank_account_id', False)
+                bank_account = primary if primary else bank_accounts[0]
+                bank_account_number = getattr(bank_account, 'acc_number', '') or ''
+                bank_id = getattr(bank_account, 'bank_id', False)
                 bank_name = (
-                    bank.bank_id.name
-                    or (hasattr(bank, 'bank_name') and bank.bank_name)
+                    getattr(bank_id, 'name', '')
+                    or getattr(bank_account, 'bank_name', '')
                     or ''
                 )
 
-        
-        if not bank_account_number and hasattr(employee, 'contract_ids') and employee.contract_ids:
-            for contract in employee.contract_ids:
-                if contract.bank_account_id:
-                    bank_account = contract.bank_account_id
-                    bank_account_number = bank_account.acc_number or ''
-                    bank_name = (
-                        bank_account.bank_id.name
-                        or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
-                        or ''
-                    )
-                    break
-
+        # 3. Check employee.address_home_id or work_contact_id partner bank_ids
         if not bank_account_number:
-            return {
-                'bank_name': '',
-                'bank_account_number': '',
-            }
+            partner = (
+                getattr(employee, 'address_home_id', False)
+                or getattr(employee, 'work_contact_id', False)
+            )
+            if partner and getattr(partner, 'bank_ids', False):
+                bank = partner.bank_ids[0]
+                bank_account_number = getattr(bank, 'acc_number', '') or ''
+                bank_id = getattr(bank, 'bank_id', False)
+                bank_name = (
+                    getattr(bank_id, 'name', '')
+                    or getattr(bank, 'bank_name', '')
+                    or ''
+                )
+
+        # 4. Check contracts if contract model has bank_account_id
+        if not bank_account_number:
+            contracts = getattr(employee, 'contract_ids', False)
+            if contracts:
+                for contract in contracts:
+                    bank_account = getattr(contract, 'bank_account_id', False)
+                    if bank_account:
+                        bank_account_number = getattr(bank_account, 'acc_number', '') or ''
+                        bank_id = getattr(bank_account, 'bank_id', False)
+                        bank_name = (
+                            getattr(bank_id, 'name', '')
+                            or getattr(bank_account, 'bank_name', '')
+                            or ''
+                        )
+                        break
+
         return {
             'bank_name': bank_name,
             'bank_account_number': bank_account_number,
@@ -90,11 +95,12 @@ class HrPayslip(models.Model):
             if net_lines:
                 net_salary = net_lines[0].total
 
-        payslip_number = ''
-        if hasattr(self, 'x_studio_slip_number') and self.x_studio_slip_number:
-            payslip_number = self.x_studio_slip_number
-        elif hasattr(self, 'number') and self.number:
-            payslip_number = self.number
+        payslip_number = (
+            getattr(self, 'x_studio_slip_number', False)
+            or getattr(self, 'number', False)
+            or getattr(self, 'name', '')
+            or ''
+        )
 
         settings = self._get_bank_advice_settings()
         bank_name = (
