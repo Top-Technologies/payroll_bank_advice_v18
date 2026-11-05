@@ -448,9 +448,9 @@ class HrPayslip(models.Model):
 
         has_access = (
             self.env.user.has_group(
-                'payroll_bank_advice.group_payroll_bank_advice_manager') or
+                'payroll_bank_advice_v18.group_payroll_bank_advice_manager') or
             self.env.user.has_group(
-                'payroll_bank_advice.group_payroll_bank_advice_user') or
+                'payroll_bank_advice_v18.group_payroll_bank_advice_user') or
             self.env.user.has_group('hr_payroll.group_hr_payroll_manager') or
             self.env.user.has_group('hr_payroll.group_hr_payroll_user')
         )
@@ -466,7 +466,7 @@ class HrPayslip(models.Model):
         # Generate Portrait Bank Advice PDF
         # ----------------------------------------------------------------
         bank_advice_report = self.env.ref(
-            'payroll_bank_advice.action_report_payroll_bank_advice'
+            'payroll_bank_advice_v18.action_report_payroll_bank_advice'
         )
         bank_advice_pdf, _ = bank_advice_report.sudo()._render_qweb_pdf(
             bank_advice_report, self.ids
@@ -476,7 +476,7 @@ class HrPayslip(models.Model):
         # Generate Landscape Salary Rule Summary PDF
         # ----------------------------------------------------------------
         summary_report = self.env.ref(
-            'payroll_bank_advice.action_report_salary_rule_summary'
+            'payroll_bank_advice_v18.action_report_salary_rule_summary'
         )
         summary_pdf, _ = summary_report.sudo()._render_qweb_pdf(
             summary_report, self.ids
