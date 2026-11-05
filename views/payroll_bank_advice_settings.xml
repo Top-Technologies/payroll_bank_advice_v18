@@ -13,9 +13,9 @@
     <!-- Menu item under Payroll ▶ Configuration -->
     <record id="menu_payroll_bank_advice_settings" model="ir.ui.menu">
         <field name="name">Bank Advice Settings</field>
-        <field name="parent_id" ref="hr_work_entry_enterprise.menu_hr_payroll_configuration"/>
+        <field name="parent_id" ref="hr_work_entry_contract_enterprise.menu_hr_payroll_configuration"/>
         <field name="action" ref="action_payroll_bank_advice_settings"/>
-        <field name="sequence">100</field>
+        <field name="sequence">90</field>
     </record>
 
     <!-- Form View -->
