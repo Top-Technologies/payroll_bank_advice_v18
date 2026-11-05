@@ -5,8 +5,8 @@
         <field name="name">Bank Advice</field>
         <field name="model">hr.payslip</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">payroll_bank_advice.payroll_bank_advice_report</field>
-        <field name="report_file">payroll_bank_advice.payroll_bank_advice_report</field>
+        <field name="report_name">payroll_bank_advice_v18.payroll_bank_advice_report</field>
+        <field name="report_file">payroll_bank_advice_v18.payroll_bank_advice_report</field>
         <field name="binding_model_id" ref="hr_payroll.model_hr_payslip"/>
         <field name="binding_type">report</field>
     </record>
@@ -31,8 +31,8 @@
         <field name="name">Salary Rule Summary</field>
         <field name="model">hr.payslip</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">payroll_bank_advice.payroll_bank_advice_salary_summary_report</field>
-        <field name="report_file">payroll_bank_advice.payroll_bank_advice_salary_summary_report</field>
+        <field name="report_name">payroll_bank_advice_v18.payroll_bank_advice_salary_summary_report</field>
+        <field name="report_file">payroll_bank_advice_v18.payroll_bank_advice_salary_summary_report</field>
         <field name="paperformat_id" ref="paperformat_salary_rule_summary"/>
         <!-- NOT bound: triggered only from action_print_bank_advice Python method -->
     </record>
