@@ -473,45 +473,17 @@ class HrPayslip(models.Model):
         )
 
         # ----------------------------------------------------------------
-        # Generate Landscape Salary Rule Summary PDF
+        # Save Bank Advice PDF as ir.attachment and return a download URL
         # ----------------------------------------------------------------
-        summary_report = self.env.ref(
-            'payroll_bank_advice_v18.action_report_salary_rule_summary'
-        )
-        summary_pdf, _ = summary_report.sudo()._render_qweb_pdf(
-            summary_report, self.ids
-        )
+        import base64
 
-        # ----------------------------------------------------------------
-        # Merge both PDFs (portrait + landscape) using pypdf
-        # ----------------------------------------------------------------
-        try:
-            from pypdf import PdfWriter, PdfReader
-        except ImportError:
-            from PyPDF2 import PdfWriter, PdfReader
-
-        import io, base64
-
-        writer = PdfWriter()
-        for pdf_bytes in [bank_advice_pdf, summary_pdf]:
-            reader = PdfReader(io.BytesIO(pdf_bytes))
-            for page in reader.pages:
-                writer.add_page(page)
-
-        out_stream = io.BytesIO()
-        writer.write(out_stream)
-        merged_pdf_bytes = out_stream.getvalue()
-
-        # ----------------------------------------------------------------
-        # Save merged PDF as ir.attachment and return a download URL
-        # ----------------------------------------------------------------
         today_str = fields.Date.today().strftime('%Y%m%d')
-        filename = 'Bank_Advice_with_Summary_{}.pdf'.format(today_str)
+        filename = 'Bank_Advice_{}.pdf'.format(today_str)
 
         attachment = self.env['ir.attachment'].sudo().create({
             'name': filename,
             'type': 'binary',
-            'datas': base64.b64encode(merged_pdf_bytes),
+            'datas': base64.b64encode(bank_advice_pdf),
             'res_model': 'hr.payslip',
             'res_id': self.ids[0] if self.ids else False,
             'mimetype': 'application/pdf',
