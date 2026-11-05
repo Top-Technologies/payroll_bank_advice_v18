@@ -94,7 +94,7 @@
                         break-inside: avoid !important;
                     }
                     table.bank-advice-table th {
-                        background-color: #118B46 !important;
+                        background-color: #f2f2f2 !important;
                         color: #000000 !important;
                         font-weight: bold;
                         border: 1px solid #000000 !important;
@@ -107,11 +107,12 @@
                         border: 1px solid #000000 !important;
                         padding: 6px 8px !important;
                         vertical-align: middle;
+                        color: #000000 !important;
                     }
                     .last-page-guard {
                         page-break-inside: avoid !important;
                         break-inside: avoid !important;
-                        margin-top: 15px;
+                        margin-top: 35px;
                     }
                 </style>
 
@@ -150,42 +151,60 @@
                         maintained with you and credit the following list of employees with corresponding amount.
                     </div>
 
+                    <!-- SECTION TITLE -->
+                    <div style="text-align:center; font-weight:bold; font-size:12pt; margin-bottom:12px; color:#000;">
+                        Payroll For the Month of <span t-out="report_data.get('pay_period', '')"/>
+                    </div>
+
                     <!-- EMPLOYEE TABLE -->
                     <table class="bank-advice-table">
                         <thead>
                             <tr>
-                                <th style="text-align:center; width:5%;">S.N</th>
-                                <th style="text-align:center; width:13%;">Ref.</th>
-                                <th style="text-align:left;   width:40%;">Employee</th>
-                                <th style="text-align:center; width:24%;">Bank Account</th>
-                                <th style="text-align:right;  width:18%;">Net Wage</th>
+                                <th style="text-align:center; width:5%;">#</th>
+                                <th style="text-align:left;   width:27%;">Employee</th>
+                                <th style="text-align:left;   width:34%;">Bank</th>
+                                <th style="text-align:left;   width:19%;">Account Number</th>
+                                <th style="text-align:left;   width:15%;">Net</th>
                             </tr>
                         </thead>
                         <tbody>
                             <t t-foreach="report_data['payslips']" t-as="line">
                                 <tr>
                                     <td style="text-align:center;"><span t-out="line_index + 1"/></td>
-                                    <td style="text-align:center;"><span t-out="line['payslip_number']"/></td>
                                     <td style="text-align:left;"><span t-out="line['employee_name']"/></td>
-                                    <td style="text-align:center;"><span t-out="line['bank_account_number']"/></td>
-                                    <td style="text-align:right;"><span t-out="'{:,.2f}'.format(line['net_salary'])"/> Br</td>
+                                    <td style="text-align:left;"><span t-out="line.get('bank_name') or settings.get('default_bank_name') or 'Commercial Bank of Ethiopia'"/></td>
+                                    <td style="text-align:left;"><span t-out="line['bank_account_number']"/></td>
+                                    <td style="text-align:left;"><span t-out="'{:,.2f}'.format(line['net_salary'])"/></td>
                                 </tr>
                             </t>
+                            <!-- TOTAL ROW -->
+                            <tr style="font-weight:bold;">
+                                <td colspan="4" style="text-align:left; font-weight:bold; padding:6px 8px;">Total</td>
+                                <td style="text-align:left; font-weight:bold; padding:6px 8px;">
+                                    <span t-out="'{:,.2f}'.format(report_data.get('total_amount', 0.0))"/>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
 
-                    <!-- LAST PAGE GUARDED BLOCK: Totals and Closing -->
+                    <!-- LAST PAGE GUARDED BLOCK: Signatures -->
                     <div class="last-page-guard">
-                        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:10pt;">
-                            <tr style="font-weight:bold;">
-                                <td colspan="4" style="border:1px solid #000 !important; padding:6px 8px !important; text-align:left; width:82%;">Total:</td>
-                                <td style="border:1px solid #000 !important; padding:6px 8px !important; text-align:right; width:18%;">
-                                    <span t-out="'{:,.2f}'.format(report_data.get('total_amount', 0.0))"/> ETB
+                        <table style="width:100%; border:none !important; border-collapse:collapse; margin-top:35px; font-size:10pt; color:#000;">
+                            <tr style="border:none !important;">
+                                <td style="width:25%; border:none !important; padding:0; text-align:left; white-space:nowrap;">
+                                    Prepared By:___________
+                                </td>
+                                <td style="width:25%; border:none !important; padding:0; text-align:left; white-space:nowrap;">
+                                    Checked By:___________
+                                </td>
+                                <td style="width:25%; border:none !important; padding:0; text-align:left; white-space:nowrap;">
+                                    Verified By:___________
+                                </td>
+                                <td style="width:25%; border:none !important; padding:0; text-align:left; white-space:nowrap;">
+                                    Approved By:___________
                                 </td>
                             </tr>
                         </table>
-                        <div style="margin-bottom:6px; font-size:11pt;">Thank you in advance on this regards.</div>
-                        <div style="margin-bottom:20px; font-size:11pt;">Best Regards,</div>
                     </div>
 
                 </div>

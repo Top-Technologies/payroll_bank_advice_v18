@@ -24,13 +24,21 @@ class HrPayslip(models.Model):
                 
                 bank_account = employee.bank_account_ids[0]
             bank_account_number = bank_account.acc_number or ''
-            bank_name = bank_account.bank_id.name or '' if bank_account.bank_id else ''
+            bank_name = (
+                bank_account.bank_id.name
+                or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
+                or ''
+            )
 
         
         if not bank_account_number and hasattr(employee, 'bank_account_id') and employee.bank_account_id:
             bank_account = employee.bank_account_id
             bank_account_number = bank_account.acc_number or ''
-            bank_name = bank_account.bank_id.name or '' if bank_account.bank_id else ''
+            bank_name = (
+                bank_account.bank_id.name
+                or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
+                or ''
+            )
 
         #
         if not bank_account_number and hasattr(employee, 'address_home_id') and employee.address_home_id:
@@ -38,7 +46,11 @@ class HrPayslip(models.Model):
             if partner.bank_ids:
                 bank = partner.bank_ids[0]
                 bank_account_number = bank.acc_number or ''
-                bank_name = bank.bank_id.name or '' if bank.bank_id else ''
+                bank_name = (
+                    bank.bank_id.name
+                    or (hasattr(bank, 'bank_name') and bank.bank_name)
+                    or ''
+                )
 
         
         if not bank_account_number and hasattr(employee, 'contract_ids') and employee.contract_ids:
@@ -46,7 +58,11 @@ class HrPayslip(models.Model):
                 if contract.bank_account_id:
                     bank_account = contract.bank_account_id
                     bank_account_number = bank_account.acc_number or ''
-                    bank_name = bank_account.bank_id.name or '' if bank_account.bank_id else ''
+                    bank_name = (
+                        bank_account.bank_id.name
+                        or (hasattr(bank_account, 'bank_name') and bank_account.bank_name)
+                        or ''
+                    )
                     break
 
         if not bank_account_number:
@@ -69,7 +85,10 @@ class HrPayslip(models.Model):
             net_salary = self.net_wage
         elif hasattr(self, 'net') and self.net:
             net_salary = self.net
-
+        elif hasattr(self, 'line_ids'):
+            net_lines = self.line_ids.filtered(lambda l: l.code == 'NET')
+            if net_lines:
+                net_salary = net_lines[0].total
 
         payslip_number = ''
         if hasattr(self, 'x_studio_slip_number') and self.x_studio_slip_number:
@@ -77,10 +96,17 @@ class HrPayslip(models.Model):
         elif hasattr(self, 'number') and self.number:
             payslip_number = self.number
 
+        settings = self._get_bank_advice_settings()
+        bank_name = (
+            bank_info.get('bank_name')
+            or settings.get('default_bank_name')
+            or 'Commercial Bank of Ethiopia'
+        )
+
         return {
             'payslip_number': payslip_number,
             'employee_name': employee.name or '',
-            'bank_name': bank_info.get('bank_name', ''),
+            'bank_name': bank_name,
             'bank_account_number': bank_info.get('bank_account_number', ''),
             'net_salary': net_salary,
         }
@@ -304,6 +330,10 @@ class HrPayslip(models.Model):
                 net_salary = slip.net_wage
             elif hasattr(slip, 'net') and slip.net:
                 net_salary = slip.net
+            elif hasattr(slip, 'line_ids'):
+                net_lines = slip.line_ids.filtered(lambda l: l.code == 'NET')
+                if net_lines:
+                    net_salary = net_lines[0].total
 
             # Payslip number
             payslip_number = slip.name or ''
@@ -378,7 +408,7 @@ class HrPayslip(models.Model):
         pay_period = ''
         first = valid_payslips[0]
         if first.date_to:
-            pay_period = first.date_to.strftime('%B %Y')
+            pay_period = first.date_to.strftime('%B, %Y')
 
      
         today = fields.Date.today()
